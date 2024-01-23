@@ -21,6 +21,7 @@ pipeline {
     }
     stage('Static Code Analysis') {
      steps{
+       script{
        """ sh
           mvn clean verify sonar:sonar \
           Dsonar.projectKey=Demo \
@@ -28,7 +29,7 @@ pipeline {
           Dsonar.login=sqp_ad5cda38d9bd3dbd408750a4b4c2b61054ed5fe8  
        """
       }
-  
+  }
     }
     stage('Build and Push Docker Image') {
       environment {
