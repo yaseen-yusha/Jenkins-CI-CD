@@ -33,18 +33,31 @@ pipeline {
     }
     stage('Build and Push Docker Image') {
       environment {
-        DOCKER_IMAGE = "myaseen05/jenkins:${BUILD_NUMBER}"
-        // DOCKERFILE_LOCATION = "java-maven-sonar-argocd-helm-k8s/spring-boot-app/Dockerfile
-            withCredentials([string(credentialsId: 'jfrog', variable: 'artifact')]) {}
+        // Set your Docker registry credentials
+        DOCKER_REGISTRY_CREDENTIALS = credentials('docker-cred')
+        // Set your JFrog Artifactory server and repository details
+        ARTIFACTORY_SERVER = 'https://yaseen.jfrog.io/artifactory/'
+        ARTIFACTORY_REPO = 'sample'
+        // Set Docker image details
+        DOCKERFILE_PATH = 'java-maven-sonar-argocd-helm-k8s/spring-boot-app/Dockerfile'
+        DOCKER_IMAGE_NAME = 'myaseen05/jenkins'
+        DOCKER_IMAGE_TAG = 'latest'
+}
       steps {
         script {
-            sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && docker build -t ${DOCKER_IMAGE} .'
-            def dockerImage = docker.image("${DOCKER_IMAGE}")
-            sh 'docker login -u adarshgowda676@gmail.com slkgroup.jfrog.io -p ${jfrog2}'
-                       sh "docker push ${Image_Tag}"
-            }
-    }
+            // Build Docker image
+             def customImage = docker.build("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}", "--file=${DOCKERFILE_PATH} .")
+             // Authenticate with Docker registry
+                    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: DOCKER_REGISTRY_CREDENTIALS, 
+                     usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD']]) 
+                   {
+                        docker.withRegistry("https://${DOCKER_REGISTRY_USERNAME}:${DOCKER_REGISTRY_PASSWORD}@your-docker-registry.com") 
+                  // Push Docker image to Docker registry
+                   customImage.push()
+            
+          }
+        }
+      }
     }
   }
-}
 }
